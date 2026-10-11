@@ -35,15 +35,16 @@ Client functions live in `src/features/products/data/products-api.ts` and go thr
 **Success (200):**
 ```json
 [
-  { "id": 1, "name": "Agua 600 ml", "price": 2500, "category": "Bebidas", "stock": 40 }
+  { "id": 1, "name": "Agua mineral 600 ml", "price": 1800, "category": "Bebidas", "stock": 120 }
 ]
 ```
 
 ### Errors
 
+The API defines no validation error for this endpoint.
+
 | Status | Meaning | App behavior |
 |--------|---------|--------------|
-| none | The API defines no error for this endpoint | — |
 | 500 | Unexpected server error (central handler) | List shows the error state: «No se pudo cargar» + `getErrorMessage` + «Reintentar» |
 | network (`status` null) | Server not reached | Same error state as above |
 
@@ -58,7 +59,7 @@ Client functions live in `src/features/products/data/products-api.ts` and go thr
 
 | Param | In | Type | Required | Notes |
 |-------|----|------|----------|-------|
-| `id` | path | integer | Yes | Positive integer; read with `Number(useParams<{ id: string }>().id)` |
+| `id` | path | integer | Yes | Digits only (an id of 0 passes and ends in 404); read with `Number(useParams<{ id: string }>().id)` |
 
 **Body:** none.
 
@@ -66,7 +67,7 @@ Client functions live in `src/features/products/data/products-api.ts` and go thr
 
 **Success (200):**
 ```json
-{ "id": 1, "name": "Agua 600 ml", "price": 2500, "category": "Bebidas", "stock": 40 }
+{ "id": 1, "name": "Agua mineral 600 ml", "price": 1800, "category": "Bebidas", "stock": 120 }
 ```
 
 ### Errors
@@ -75,8 +76,8 @@ Order of checks: `parseId` first, then lookup.
 
 | Status | Meaning | Response body | App behavior |
 |--------|---------|---------------|--------------|
-| 400 | `id` is not a positive integer | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Detail/edit screen shows `getErrorMessage`; no «Reintentar» |
-| 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Same as above (not-found state) |
+| 400 | `id` is not made only of digits (`parseId` returns `null`) | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Detail/edit screen shows `getErrorMessage`; no «Reintentar» |
+| 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Same as above (not-found state: «No encontramos ese producto.») |
 | network (`status` null) | Server not reached | — | Same as above |
 
 ---
@@ -114,7 +115,7 @@ The new `id` is assigned by the server: `nextId` starts at the highest seed id +
 | Status | Meaning | Response body | App behavior |
 |--------|---------|---------------|--------------|
 | 400 | Validation failed (all problems accumulated) | `{ "error": "Datos inválidos", "details": ["..."] }` | Form shows the server `error` and each `details` message in `IonText` (danger); stays on screen |
-| 400 | Malformed JSON (central handler) | Central handler format | Form shows `getErrorMessage` |
+| 400 | Malformed JSON (central handler) | `{ "error": "El cuerpo no es un JSON válido", "details": [] }` | Form shows `getErrorMessage` |
 | network (`status` null) | Server not reached | — | Form shows `getErrorMessage` |
 
 On success the form goes back to `/productos`.
@@ -130,7 +131,7 @@ On success the form goes back to `/productos`.
 
 | Param | In | Type | Required | Notes |
 |-------|----|------|----------|-------|
-| `id` | path | integer | Yes | Positive integer |
+| `id` | path | integer | Yes | Digits only (an id of 0 passes and ends in 404) |
 
 **Body:** same four fields and rules as `POST`. `PUT` replaces the whole product (it is validated like `POST`) and keeps the `id`.
 ```json
@@ -150,9 +151,10 @@ Order of checks: `parseId` → lookup → validation.
 
 | Status | Meaning | Response body | App behavior |
 |--------|---------|---------------|--------------|
-| 400 | `id` is not a positive integer | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Form shows `getErrorMessage` |
+| 400 | `id` is not made only of digits (`parseId` returns `null`) | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Form shows `getErrorMessage` |
 | 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Form shows `getErrorMessage` |
 | 400 | Validation failed (all problems accumulated) | `{ "error": "Datos inválidos", "details": ["..."] }` | Form shows the server `error` and each `details` message in `IonText` (danger) |
+| 400 | Malformed JSON (central handler) | `{ "error": "El cuerpo no es un JSON válido", "details": [] }` | Form shows `getErrorMessage` |
 | network (`status` null) | Server not reached | — | Form shows `getErrorMessage` |
 
 On success the form goes back to `/productos`.
@@ -168,13 +170,13 @@ On success the form goes back to `/productos`.
 
 | Param | In | Type | Required | Notes |
 |-------|----|------|----------|-------|
-| `id` | path | integer | Yes | Positive integer |
+| `id` | path | integer | Yes | Digits only (an id of 0 passes and ends in 404) |
 
 **Body:** none.
 
 ### Response
 
-**Success (204):** no body (`res.status(204).end()`).
+**Success (204):** no body (`res.status(204).end()`). `request<T>()` returns `undefined` for a 204, so `deleteProduct` needs no special case.
 
 ### Errors
 
@@ -182,7 +184,7 @@ Order of checks: `parseId` first, then lookup.
 
 | Status | Meaning | Response body | App behavior |
 |--------|---------|---------------|--------------|
-| 400 | `id` is not a positive integer | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Detail screen shows `getErrorMessage` |
+| 400 | `id` is not made only of digits (`parseId` returns `null`) | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Detail screen shows `getErrorMessage` |
 | 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Detail screen shows `getErrorMessage` |
 | network (`status` null) | Server not reached | — | Detail screen shows `getErrorMessage` |
 
@@ -190,9 +192,11 @@ The app asks for confirmation on screen first («¿Eliminar este producto?» + �
 
 ---
 
-## Unknown routes
+## Unknown routes and unexpected errors
 
-Any other route is answered by the handler given by the starter: `404`. It is not modified. It is covered by the test `unknownRoute_whenRequested_returns404FromGivenHandler`.
+Any other route is answered by the handler given by the starter, with status `404` and the body `{ "error": "Ruta no encontrada", "details": ["<METHOD> <url>"] }`. It is not modified. It is covered by the test `unknownRoute_whenRequested_returns404FromGivenHandler`.
+
+Unexpected errors (not malformed JSON) are answered by the central handler with `500` and `{ "error": "Error interno del servidor", "details": [] }`.
 
 ---
 
