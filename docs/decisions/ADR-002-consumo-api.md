@@ -31,7 +31,8 @@ A single client keeps URL building, JSON handling and error translation in one p
 - `API_URL` comes from `VITE_API_URL` through `data/config.ts` (set in `.env`; `.env.example` has no secrets).
 - `getProducts`, `getProduct`, `createProduct`, `updateProduct` and `deleteProduct` are the only functions the pages use.
 - `ApiError` separates two cases: a **network error** (the server was not reached: `status` is `null` and `isNetworkError` is true) and a **non-successful response** (it carries the HTTP `status` and the server's `details`).
-- `getErrorMessage` turns any error into Spanish text for the person using the app.
+- `request<T>()` returns `undefined` for a `204` (no body), so `deleteProduct` needs no special case.
+- `getErrorMessage` turns any error into Spanish text: network error → «No fue posible conectar con el servidor. Verifique que la API esté en ejecución.»; status 404 → «No encontramos ese producto.»; any other `ApiError` → the message sent by the server; anything else → «Ocurrió un error inesperado. Intente de nuevo.»
 - No retries and no timeouts: out of scope.
 
 **Server side (`server/app.js`, given by the starter):**
@@ -39,7 +40,8 @@ A single client keeps URL building, JSON handling and error translation in one p
 - `cors` allows the browser app (another origin) to call the API.
 - `parseId` converts the `:id` parameter to a positive integer, or `null` if it is not valid (the route then answers 400).
 - A handler for unknown routes answers 404.
-- A central error handler answers 400 for malformed JSON and 500 for any other unexpected error.
+- `parseId` converts the `:id` text to a number if it contains only digits, or `null` otherwise (the route then answers 400). An id of `0` passes `parseId` and ends in 404.
+- A central error handler answers `400` with `{ "error": "El cuerpo no es un JSON válido", "details": [] }` for malformed JSON, and `500` with `{ "error": "Error interno del servidor", "details": [] }` for any other unexpected error.
 
 ---
 
