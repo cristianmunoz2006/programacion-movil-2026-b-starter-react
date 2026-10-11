@@ -38,7 +38,6 @@ A single client keeps URL building, JSON handling and error translation in one p
 **Server side (`server/app.js`, given by the starter):**
 - `express.json()` parses JSON request bodies.
 - `cors` allows the browser app (another origin) to call the API.
-- `parseId` converts the `:id` parameter to a positive integer, or `null` if it is not valid (the route then answers 400).
 - A handler for unknown routes answers 404.
 - `parseId` converts the `:id` text to a number if it contains only digits, or `null` otherwise (the route then answers 400). An id of `0` passes `parseId` and ends in 404.
 - A central error handler answers `400` with `{ "error": "El cuerpo no es un JSON válido", "details": [] }` for malformed JSON, and `500` with `{ "error": "Error interno del servidor", "details": [] }` for any other unexpected error.
