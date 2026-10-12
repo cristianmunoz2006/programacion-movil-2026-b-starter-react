@@ -86,20 +86,23 @@ export function formatCOP(value: number): string {
  *  - `priceLabel`: el precio con `formatCOP` (p. ej. 1250000 → "$ 1.250.000").
  *  - `stockLabel`: «Agotado» si stock = 0 · «Pocas unidades» si stock < LOW_STOCK_THRESHOLD · «Disponible» en otro caso.
  *  - `isOutOfStock` e `isLowStock` coherentes con la etiqueta; `id`, `category` y `stock` pasan sin cambios.
- *
- * TODO(Parte 3): implementar (hoy devuelve valores de relleno).
  */
 export function toProductView(product: Product): ProductView {
-  // TODO(Parte 3): reemplazar este relleno por la implementación real.
+  const isOutOfStock = product.stock === 0;
+  const isLowStock = product.stock > 0 && product.stock < LOW_STOCK_THRESHOLD;
+  let stockLabel = 'Disponible';
+  if (isOutOfStock) stockLabel = 'Agotado';
+  else if (isLowStock) stockLabel = 'Pocas unidades';
+
   return {
     id: product.id,
-    name: product.name,
-    priceLabel: '',
+    name: product.name.trim(),
+    priceLabel: formatCOP(product.price),
     category: product.category,
     stock: product.stock,
-    stockLabel: '',
-    isLowStock: false,
-    isOutOfStock: false,
+    stockLabel,
+    isLowStock,
+    isOutOfStock,
   };
 }
 
@@ -116,11 +119,28 @@ export function toProductView(product: Product): ProductView {
  * TODO(Parte 3): implementar (hoy da por válido cualquier dato).
  */
 export function validateProduct(input: ProductInput): ValidationResult {
-  // TODO(Parte 3): validar `input` y devolver los errores por campo.
-  void input;
-  return { isValid: true, errors: {} };
-}
+  const errors: ValidationResult['errors'] = {};
 
+  if (typeof input.name !== 'string' || input.name.trim() === '') {
+    errors.name = 'name es obligatorio';
+  } else if (input.name.trim().length > NAME_MAX_LENGTH) {
+    errors.name = `name debe tener máximo ${NAME_MAX_LENGTH} caracteres`;
+  }
+
+  if (typeof input.price !== 'number' || !Number.isFinite(input.price) || input.price <= 0) {
+    errors.price = 'price debe ser un número mayor que 0';
+  }
+
+  if (!(CATEGORIES as readonly string[]).includes(input.category)) {
+    errors.category = `category debe ser una de: ${CATEGORIES.join(', ')}`;
+  }
+
+  if (!Number.isInteger(input.stock) || input.stock < 0) {
+    errors.stock = 'stock debe ser un entero mayor o igual que 0';
+  }
+
+  return { isValid: Object.keys(errors).length === 0, errors };
+}
 /**
  * Filtra la lista en memoria.
  *
@@ -133,7 +153,11 @@ export function validateProduct(input: ProductInput): ValidationResult {
  * TODO(Parte 3): implementar (hoy devuelve la lista sin filtrar).
  */
 export function filterProducts(products: Product[], filters: ProductFilters): Product[] {
-  // TODO(Parte 3): aplicar `filters.search` y `filters.category`.
-  void filters;
-  return products;
+  const text = filters.search.trim().toLowerCase();
+
+  return products.filter((product) => {
+    const matchesSearch = text === '' || product.name.toLowerCase().includes(text);
+    const matchesCategory = filters.category === '' || product.category === filters.category;
+    return matchesSearch && matchesCategory;
+  });
 }
