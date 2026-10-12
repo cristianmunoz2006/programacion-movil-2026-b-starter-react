@@ -21,8 +21,8 @@
  *   - parseId(): convierte el parámetro `:id` en número, o devuelve null si no es numérico.
  *   - Manejador 404 (ruta desconocida) y manejador de errores central (500).
  *
- * QUÉ SE ESCRIBE (Parte 2 del TODO.md): las cinco rutas de /api/products. Hoy responden
- * 501 (stub) y deben reemplazarse por la lógica real.
+  * QUÉ SE ESCRIBIÓ (Parte 2 del TODO.md): las cinco rutas de /api/products, con
+ * validación, filtros y códigos HTTP.
  */
 const express = require("express");
 const cors = require("cors");
