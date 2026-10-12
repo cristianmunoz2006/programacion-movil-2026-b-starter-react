@@ -1,6 +1,6 @@
 # Feature — Product catalog
 
-- **Owner:** Juan Camilo Bernal Gordillo
+- **Owner:** Cristian Andres Muñoz Montengro
 - **Status:** In progress
 - **Related stories:** N/A (individual midterm assignment, no user stories)
 

@@ -3,7 +3,7 @@
 - **ID:** ADR-002
 - **Date:** 2026-10-10
 - **Status:** Accepted
-- **Authors:** Juan Camilo Bernal Gordillo
+- **Authors:** Cristian Andres Muñoz Montenegro
 
 ---
 
