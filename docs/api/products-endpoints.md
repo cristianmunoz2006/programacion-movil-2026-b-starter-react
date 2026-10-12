@@ -103,6 +103,8 @@ Order of checks: `parseId` first, then lookup.
 
 The new `id` is assigned by the server: `nextId` starts at the highest seed id + 1 and grows on every POST. An id is never reused.
 
+Validation is done by `validateProductInput(body)` in `server/app.js`, shared by `POST` and `PUT`. It returns the array of messages (empty when the body is valid), so all problems are accumulated in `details`.
+
 ### Response
 
 **Success (201):** the created product, with its new `id`.
