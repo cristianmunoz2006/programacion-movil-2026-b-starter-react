@@ -47,23 +47,44 @@ function createApp() {
   app.use(express.json());
 
   // Almacenamiento en memoria: copia de la semilla (se reinicia con el servidor).
-  // TODO(Parte 2): úselo en las rutas de abajo y lleve la cuenta del siguiente id.
   const products = seedProducts.map((item) => ({ ...item }));
-  void products;
+  // El id nunca se reutiliza: máximo de la semilla + 1 y crece en cada POST (no usar length + 1).
+  let nextId = Math.max(...seedProducts.map((item) => item.id)) + 1;
+  void nextId; // se usa en POST (paso 2)
   void CATEGORIES;
-  void parseId;
 
   const notImplemented = (_req, res) => {
     res.status(501).json({ error: 'Not implemented' });
   };
 
-  // TODO(Parte 2): GET /api/products con filtros. Los parámetros llegan en `req.query`:
-  //   const { search, category } = req.query;
-  //   `search`: el nombre contiene el texto, sin distinguir mayúsculas (toLowerCase + includes).
-  //   `category`: igual a la categoría (exacta). Use `.filter` sobre el arreglo.
-  app.get('/api/products', notImplemented);
-  // TODO(Parte 2): GET /api/products/:id → 200 | 400 (parseId devuelve null) | 404 (no existe).
-  app.get('/api/products/:id', notImplemented);
+  app.get('/api/products', (req, res) => {
+    const { search, category } = req.query;
+    let result = products;
+    if (typeof search === 'string') {
+      const text = search.toLowerCase();
+      result = result.filter((item) => item.name.toLowerCase().includes(text));
+    }
+    if (typeof category === 'string') {
+      result = result.filter((item) => item.category === category);
+    }
+    res.json(result);
+  });
+
+  app.get('/api/products/:id', (req, res) => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      return res
+        .status(400)
+        .json({ error: 'Id inválido', details: ['El id debe ser un número entero positivo'] });
+    }
+    const product = products.find((item) => item.id === id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ error: 'Producto no encontrado', details: [`No existe un producto con id ${id}`] });
+    }
+    return res.json(product);
+  });
   // TODO(Parte 2): POST /api/products → 201 con el producto creado | 400 con { error, details[] }.
   //   Patrón de validación:  const details = [];  if (...) details.push('mensaje');
   app.post('/api/products', notImplemented);
