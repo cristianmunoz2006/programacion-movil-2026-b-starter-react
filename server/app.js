@@ -30,7 +30,7 @@ const seedProducts = require('./data/products.json');
 
 // Categorías permitidas (la app usa la misma lista).
 const CATEGORIES = ['Bebidas', 'Snacks', 'Aseo', 'Hogar'];
-
+const NAME_MAX_LENGTH = 60;
 /**
  * YA DADO. Convierte el texto de `:id` en número.
  * Devuelve null si no son solo dígitos ("abc", "1.5", "-2"): la ruta responde 400 en ese caso.
@@ -38,7 +38,30 @@ const CATEGORIES = ['Bebidas', 'Snacks', 'Aseo', 'Hogar'];
 function parseId(rawId) {
   return /^\d+$/.test(rawId) ? Number(rawId) : null;
 }
+/**
+ * Valida el cuerpo de POST y PUT. Devuelve el arreglo de mensajes (vacío si es válido),
+ * con un mensaje por problema, todos acumulados.
+ */
+function validateProductInput(body) {
+  const data = body && typeof body === 'object' ? body : {};
+  const details = [];
 
+  if (typeof data.name !== 'string' || data.name.trim() === '') {
+    details.push('name es obligatorio');
+  } else if (data.name.trim().length > NAME_MAX_LENGTH) {
+    details.push(`name debe tener máximo ${NAME_MAX_LENGTH} caracteres`);
+  }
+  if (typeof data.price !== 'number' || !Number.isFinite(data.price) || data.price <= 0) {
+    details.push('price debe ser un número mayor que 0');
+  }
+  if (!CATEGORIES.includes(data.category)) {
+    details.push(`category debe ser una de: ${CATEGORIES.join(', ')}`);
+  }
+  if (!Number.isInteger(data.stock) || data.stock < 0) {
+    details.push('stock debe ser un entero mayor o igual que 0');
+  }
+  return details;
+}
 function createApp() {
   const app = express();
 
@@ -50,12 +73,6 @@ function createApp() {
   const products = seedProducts.map((item) => ({ ...item }));
   // El id nunca se reutiliza: máximo de la semilla + 1 y crece en cada POST (no usar length + 1).
   let nextId = Math.max(...seedProducts.map((item) => item.id)) + 1;
-  void nextId; // se usa en POST (paso 2)
-  void CATEGORIES;
-
-  const notImplemented = (_req, res) => {
-    res.status(501).json({ error: 'Not implemented' });
-  };
 
   app.get('/api/products', (req, res) => {
     const { search, category } = req.query;
@@ -85,13 +102,58 @@ function createApp() {
     }
     return res.json(product);
   });
-  // TODO(Parte 2): POST /api/products → 201 con el producto creado | 400 con { error, details[] }.
-  //   Patrón de validación:  const details = [];  if (...) details.push('mensaje');
-  app.post('/api/products', notImplemented);
-  // TODO(Parte 2): PUT /api/products/:id → 200 con el producto actualizado | 400 | 404.
-  app.put('/api/products/:id', notImplemented);
-  // TODO(Parte 2): DELETE /api/products/:id → 204 sin cuerpo (res.status(204).end()) | 400 | 404.
-  app.delete('/api/products/:id', notImplemented);
+   app.post('/api/products', (req, res) => {
+    const details = validateProductInput(req.body);
+    if (details.length > 0) {
+      return res.status(400).json({ error: 'Datos inválidos', details });
+    }
+    const { name, price, category, stock } = req.body;
+    const product = { id: nextId, name: name.trim(), price, category, stock };
+    nextId += 1;
+    products.push(product);
+    return res.status(201).json(product);
+  });
+
+  // PUT: parseId → buscar (404) → validar (400). Reemplaza el producto completo y conserva el id.
+  app.put('/api/products/:id', (req, res) => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      return res
+        .status(400)
+        .json({ error: 'Id inválido', details: ['El id debe ser un número entero positivo'] });
+    }
+    const index = products.findIndex((item) => item.id === id);
+    if (index === -1) {
+      return res
+        .status(404)
+        .json({ error: 'Producto no encontrado', details: [`No existe un producto con id ${id}`] });
+    }
+    const details = validateProductInput(req.body);
+    if (details.length > 0) {
+      return res.status(400).json({ error: 'Datos inválidos', details });
+    }
+    const { name, price, category, stock } = req.body;
+    products[index] = { id, name: name.trim(), price, category, stock };
+    return res.json(products[index]);
+  });
+
+  // DELETE: parseId → buscar (404) → 204 sin cuerpo.
+  app.delete('/api/products/:id', (req, res) => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      return res
+        .status(400)
+        .json({ error: 'Id inválido', details: ['El id debe ser un número entero positivo'] });
+    }
+    const index = products.findIndex((item) => item.id === id);
+    if (index === -1) {
+      return res
+        .status(404)
+        .json({ error: 'Producto no encontrado', details: [`No existe un producto con id ${id}`] });
+    }
+    products.splice(index, 1);
+    return res.status(204).end();
+  });
 
   // YA DADO: ruta desconocida → 404 con el formato de error uniforme.
   app.use((req, res) => {
