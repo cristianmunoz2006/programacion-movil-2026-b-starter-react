@@ -1,52 +1,79 @@
-import { describe, expect, it } from 'vitest';
-import seedProducts from '../../../../server/data/products.json';
-import { CATEGORIES, formatCOP, LOW_STOCK_THRESHOLD } from '../domain/product';
+import { describe, it, expect } from 'vitest';
+import {
+  filterProducts,
+  toProductView,
+  validateProduct,
+  type Product,
+  type ProductInput,
+} from '../domain/product';
 
-/**
- * Pruebas unitarias de EJEMPLO (ya vienen dadas) para que `npm test` corra desde el inicio.
- * Muestran el estilo esperado: describe / it / expect, sin red ni pantallas.
- */
-describe('datos semilla de la API (ejemplo)', () => {
-  it('trae 8 productos con ids 1 a 8', () => {
-    expect(seedProducts).toHaveLength(8);
-    expect(seedProducts.map((item) => item.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-  });
-
-  it('usa solo categorías permitidas y stock entero no negativo', () => {
-    for (const item of seedProducts) {
-      expect(CATEGORIES).toContain(item.category);
-      expect(Number.isInteger(item.stock)).toBe(true);
-      expect(item.stock).toBeGreaterThanOrEqual(0);
-    }
-  });
-
-  it('incluye productos agotados y con pocas unidades para probar las etiquetas', () => {
-    expect(seedProducts.some((item) => item.stock === 0)).toBe(true);
-    expect(seedProducts.some((item) => item.stock > 0 && item.stock < LOW_STOCK_THRESHOLD)).toBe(true);
-  });
-});
-
-describe('formatCOP (ejemplo)', () => {
-  it('separa los miles con punto y antepone el signo de pesos', () => {
-    expect(formatCOP(1250000)).toBe('$ 1.250.000');
-    expect(formatCOP(8500)).toBe('$ 8.500');
-    expect(formatCOP(950)).toBe('$ 950');
-  });
-});
-
-/**
- * TODO(Parte 5): agregue sus pruebas UNITARIAS aquí (o en archivos nuevos dentro de __tests__/).
- * Mínimo dos de estas funciones del dominio: `validateProduct`, `toProductView` o `filterProducts`.
- * Quite el `.todo` cuando escriba el cuerpo de cada una.
- */
 describe('validateProduct', () => {
-  it.todo('rechaza un nombre vacío, un precio menor o igual que 0 y una categoría no permitida');
+  it('validateProduct_whenFieldsInvalid_returnsOneErrorPerField', () => {
+    // Arrange
+    const input: ProductInput = { name: '   ', price: 0, category: 'Otra', stock: -1 };
+
+    // Act
+    const result = validateProduct(input);
+
+    // Assert
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toEqual({
+      name: 'name es obligatorio',
+      price: 'price debe ser un número mayor que 0',
+      category: 'category debe ser una de: Bebidas, Snacks, Aseo, Hogar',
+      stock: 'stock debe ser un entero mayor o igual que 0',
+    });
+  });
+
+  it('validateProduct_whenInputValid_returnsIsValid', () => {
+    // Arrange
+    const input: ProductInput = { name: 'Agua 600 ml', price: 2500, category: 'Bebidas', stock: 10 };
+
+    // Act
+    const result = validateProduct(input);
+
+    // Assert
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toEqual({});
+  });
 });
 
 describe('toProductView', () => {
-  it.todo('formatea el precio en pesos y marca «Agotado» y «Pocas unidades»');
+  it('toProductView_whenStockVaries_returnsLabelAndPrice', () => {
+    // Arrange
+    const base: Product = { id: 1, name: '  Arroz  ', price: 1250000, category: 'Hogar', stock: 0 };
+
+    // Act
+    const soldOut = toProductView({ ...base, stock: 0 });
+    const low = toProductView({ ...base, stock: 3 });
+    const available = toProductView({ ...base, stock: 5 });
+
+    // Assert
+    expect(soldOut.stockLabel).toBe('Agotado');
+    expect(soldOut.isOutOfStock).toBe(true);
+    expect(low.stockLabel).toBe('Pocas unidades');
+    expect(low.isLowStock).toBe(true);
+    expect(available.stockLabel).toBe('Disponible');
+    expect(available.isLowStock).toBe(false);
+    expect(available.priceLabel).toBe('$ 1.250.000');
+    expect(available.name).toBe('Arroz');
+  });
 });
 
 describe('filterProducts', () => {
-  it.todo('filtra por texto sin distinguir mayúsculas y por categoría exacta');
+  it('filterProducts_whenSearchAndCategory_returnsMatches', () => {
+    // Arrange
+    const products: Product[] = [
+      { id: 1, name: 'Cola Zero', price: 3000, category: 'Bebidas', stock: 8 },
+      { id: 2, name: 'Cola Chips', price: 2000, category: 'Snacks', stock: 4 },
+      { id: 3, name: 'Jugo de mango', price: 3500, category: 'Bebidas', stock: 6 },
+    ];
+
+    // Act
+    const result = filterProducts(products, { search: ' COLA ', category: 'Bebidas' });
+
+    // Assert
+    expect(result).toEqual([products[0]]);
+    expect(result).not.toBe(products);
+  });
 });

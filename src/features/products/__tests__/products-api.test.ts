@@ -30,14 +30,55 @@ describe('API de productos (ejemplo)', () => {
   });
 });
 
-/**
- * TODO(Parte 5): agregue sus pruebas de la API aquí, con el mismo patrón. Mínimo dos, por ejemplo:
- * POST con datos inválidos → 400 con `details`, y GET de un id inexistente → 404.
- */
-describe('POST /api/products', () => {
-  it.todo('responde 400 con { error, details } cuando los datos no validan');
-});
+describe('API de productos', () => {
+  it('postProduct_whenInvalid_returns400WithDetails', async () => {
+    const response = await fetch(`${baseUrl}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '', price: '100', category: 'X', stock: -1 }),
+    });
+    const body = await response.json();
 
-describe('GET /api/products/:id', () => {
-  it.todo('responde 404 cuando el producto no existe');
+    expect(response.status).toBe(400);
+    expect(body.error).toBe('Datos inválidos');
+    expect(body.details).toEqual([
+      'name es obligatorio',
+      'price debe ser un número mayor que 0',
+      'category debe ser una de: Bebidas, Snacks, Aseo, Hogar',
+      'stock debe ser un entero mayor o igual que 0',
+    ]);
+  });
+
+  it('getProduct_whenIdDoesNotExist_returns404', async () => {
+    const response = await fetch(`${baseUrl}/api/products/999`);
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body).toEqual({
+      error: 'Producto no encontrado',
+      details: ['No existe un producto con id 999'],
+    });
+  });
+
+  it('getProduct_whenIdNotNumeric_returns400', async () => {
+    const response = await fetch(`${baseUrl}/api/products/abc`);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      error: 'Id inválido',
+      details: ['El id debe ser un número entero positivo'],
+    });
+  });
+
+  // Parte 2 (0,3): esta ruta no existe, así que ninguna ruta la atiende y Express llega al
+  // manejador 404 dado en createApp(). Ese manejador pone el método y la URL en `details`.
+  it('unknownRoute_whenRequested_returns404FromGivenHandler', async () => {
+    const response = await fetch(`${baseUrl}/api/no-existe`);
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.error).toBe('Ruta no encontrada');
+    expect(body.details).toContain('GET /api/no-existe');
+  });
 });
