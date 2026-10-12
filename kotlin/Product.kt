@@ -1,24 +1,34 @@
-// Ejercicio Kotlin · Parte 4 del TODO.md
-//
-// Alcance: solo lo visto en la semana 7 (val/var, funciones, clases, tipos que admiten null,
-// `?.`, `?:`, if/when, plantillas de cadena). No exige proyecto Android.
-// Cómo ejecutarlo: pegue el archivo en https://play.kotlinlang.org o compílelo con `kotlinc`.
+class Product(
+    val id: Int,
+    val name: String,
+    var price: Double,
+    val category: String,
+    var stock: Int?
+)
 
-// TODO(Parte 4): defina la clase Product con id (Int), name (String), price (Double),
-// category (String) y un campo OPCIONAL: stock (Int?) que puede ser null.
-// Use `val` para lo que no cambia y `var` solo para lo que sí cambia.
+fun stockLabel(stock: Int?): String {
+    return when {
+        stock == null -> "Sin dato"
+        stock == 0 -> "Agotado"
+        stock < 5 -> "Pocas unidades"
+        else -> "Disponible"
+    }
+}
 
-
-// TODO(Parte 4): stockLabel(stock: Int?): String
-//   null → "Sin dato" · 0 → "Agotado" · menos de 5 → "Pocas unidades" · otro caso → "Disponible"
-//   (use `?:`, `?.` o `if` para tratar el null).
-
-
-// TODO(Parte 4): applyDiscount(price: Double, percent: Int): Double
-//   Devuelve el precio con el descuento aplicado (p. ej. 10000.0 con 15 % → 8500.0).
-
+fun applyDiscount(price: Double, percent: Int): Double {
+    return price * (100 - percent) / 100
+}
 
 fun main() {
-    // TODO(Parte 4): cree 3 productos (uno con stock null y uno agotado) e imprima, por cada uno,
-    // su nombre, la etiqueta de stock y su precio con un 10 % de descuento.
+    val products = listOf(
+        Product(1, "Agua 600 ml", 2500.0, "Bebidas", 24),
+        Product(2, "Papas fritas", 3800.0, "Snacks", 0),
+        Product(3, "Jabón líquido", 12000.0, "Aseo", null)
+    )
+
+    for (p in products) {
+        val label = stockLabel(p.stock)
+        val discounted = applyDiscount(p.price, 10)
+        println("${p.name} | $label | precio con 10 % de descuento: $discounted")
+    }
 }
