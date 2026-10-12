@@ -19,7 +19,7 @@ Show every product from the API, let the user search by name and filter by categ
 | Header | `IonHeader` + `IonToolbar` + `IonTitle` | Title: «Productos». |
 | Search | `IonInput` | Placeholder «Buscar por nombre». Filters by name, case-insensitive. |
 | Category filter | 5 `IonButton` | «Todas», «Bebidas», «Snacks», «Aseo», «Hogar». The selected one uses `fill="solid"`, the others `fill="outline"`. Default: «Todas». |
-| Body | `ProductCard` list, `IonSpinner`, `EmptyState` | One `ProductCard` per product after filtering. Shows name, category, price (`priceLabel`) and stock badge (`stockLabel`). |
+| Body | `ProductCard` list, `EmptyState` | One `ProductCard` per product after filtering. Shows name, category, price (`priceLabel`) and stock badge (`stockLabel`). |
 | CTA | `IonButton` | «Nuevo producto» → `/productos/nuevo`. |
 
 Stock badge (`IonBadge`): «Agotado» if stock is 0 (color danger), «Pocas unidades» if stock is below 5 (color warning), «Disponible» otherwise (color success).
@@ -30,9 +30,9 @@ Stock badge (`IonBadge`): «Agotado» if stock is 0 (color danger), «Pocas unid
 
 | State | Trigger | UI |
 |-------|---------|-----|
-| Loading | `getProducts()` in flight | `IonSpinner` + text «Cargando productos…». |
+| Loading | `getProducts()` in flight | Plain text «Cargando productos…» (no spinner). |
 | Loaded | Request succeeded and at least one product matches the filters | `ProductCard` list. |
-| Empty | Request succeeded and the API returned no products | `EmptyState`: title «No hay productos», message «Aún no hay productos en el catálogo.», plus the «Nuevo producto» button. |
+| Empty | Request succeeded and the API returned no products | `EmptyState`: title «No hay productos», message «Aún no hay productos registrados.», plus the «Nuevo producto» button. |
 | No results | Products exist but search/category match none | `EmptyState`: title «Sin resultados», message «Ningún producto coincide con la búsqueda o la categoría.» Search and category controls stay visible. |
 | Error | Request failed (network, 4xx, 5xx) | Title «No se pudo cargar», message from `getErrorMessage(error)`, button «Reintentar». |
 | Offline | N/A | No offline mode: a network failure is an Error state (`ApiError.isNetworkError`). |
