@@ -5,9 +5,8 @@
  * Solo tipos, constantes y funciones puras: aquí no hay HTTP, ni React, ni Ionic
  * (regla de dependencias del framework: el dominio no depende de nada de afuera).
  *
- * Los tipos, las constantes y `formatCOP` ya vienen dados. Las tres funciones
- * `toProductView`, `validateProduct` y `filterProducts` son STUBS: se implementan
- * en la Parte 3 del TODO.md.
+ * Los tipos, las constantes y `formatCOP` ya vienen dados; `toProductView`,
+ * `validateProduct` y `filterProducts` están implementadas.
  */
 
 /** Producto tal como lo entrega la API. */
@@ -115,8 +114,6 @@ export function toProductView(product: Product): ProductView {
  *  - `category`: obligatoria y una de CATEGORIES.
  *  - `stock`: entero mayor o igual que 0.
  *  - `errors` trae un mensaje por cada campo inválido; `isValid` es true solo si no hay errores.
- *
- * TODO(Parte 3): implementar (hoy da por válido cualquier dato).
  */
 export function validateProduct(input: ProductInput): ValidationResult {
   const errors: ValidationResult['errors'] = {};
@@ -141,6 +138,7 @@ export function validateProduct(input: ProductInput): ValidationResult {
 
   return { isValid: Object.keys(errors).length === 0, errors };
 }
+
 /**
  * Filtra la lista en memoria.
  *
@@ -149,8 +147,6 @@ export function validateProduct(input: ProductInput): ValidationResult {
  *    (un texto vacío o de espacios no filtra).
  *  - `category`: conserva solo los de esa categoría exacta (vacío = todas).
  *  - Devuelve un arreglo nuevo; no modifica el original.
- *
- * TODO(Parte 3): implementar (hoy devuelve la lista sin filtrar).
  */
 export function filterProducts(products: Product[], filters: ProductFilters): Product[] {
   const text = filters.search.trim().toLowerCase();
