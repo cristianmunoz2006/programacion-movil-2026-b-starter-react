@@ -77,7 +77,7 @@ Order of checks: `parseId` first, then lookup.
 | Status | Meaning | Response body | App behavior |
 |--------|---------|---------------|--------------|
 | 400 | `id` is not made only of digits (`parseId` returns `null`) | `{ "error": "Id inválido", "details": ["El id debe ser un número entero positivo"] }` | Detail/edit screen shows `getErrorMessage`; no «Reintentar» |
-| 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Same as above (not-found state: «No encontramos ese producto.») |
+| 404 | No product with that id | `{ "error": "Producto no encontrado", "details": ["No existe un producto con id N"] }` | Same as above ((not-found state: title «No se pudo cargar» + the API message «Producto no encontrado»)) |
 | network (`status` null) | Server not reached | — | Same as above |
 
 ---
